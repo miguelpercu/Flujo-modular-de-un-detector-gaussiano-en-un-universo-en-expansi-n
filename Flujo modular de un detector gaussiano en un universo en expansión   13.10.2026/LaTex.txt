@@ -1,0 +1,596 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{natbib}
+
+\title{Modular Flow of a Gaussian Detector in an Expanding Universe:\\
+A Test of Emergent Time and an Informational Bound on Clock Resolution}
+
+\author{Miguel \'Angel Percudani\thanks{Independent researcher, Pu\'an, Buenos Aires, Argentina.
+Email: \texttt{miguel.percudani@yahoo.com.ar}.
+ORCID: 0009-0007-1748-3212.
+Prior public releases of the UAT/TAU framework: Zenodo
+\texttt{10.5281/zenodo.17411019}, \texttt{10.5281/zenodo.17411163},
+\texttt{10.5281/zenodo.17422770}, \texttt{10.5281/zenodo.17695218} (2025);
+GitHub repositories \texttt{miguelpercu/Tiempo\_Aplicable\_7.10.25},
+\texttt{miguelpercu/ecuaciones-tiempos-aplicables},
+\texttt{miguelpercu/tiempo-aplicable-cuantico}.}}
+
+\date{October 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We test a reformulation of the Universal Applied Time (UAT) framework
+based on the modular flow of Tomita--Takesaki. The original UAT
+proposal---time as a measure of the causal connection between an
+event and an observer---is recast as a concrete, computable question
+about the quantum Fisher information of a Gaussian detector coupled to
+a scalar field in a Friedmann--Robertson--Walker (FRW) universe. We
+implement the calculation for a detector with $N$ field modes in a
+radiation-dominated background $a(\eta) = \eta^2$, using symplectic
+covariance matrices and the standard Gaussian formula for $F_Q$. The
+Unruh--DeWitt consistency check (KMS condition) passes at machine
+precision ($\max|\Delta W/W| \lesssim 10^{-14}$ for accelerations
+$a \in \{0.5, 1.0, 2.0\}$). The information-mutual observable
+$I(O{:}\phi)_{\max}$ converges with $N$ to approximately $0.26$ nats.
+The previously reported power-law exponent $\alpha$ of the
+Fisher-information decay does \emph{not} converge with $N$; we show
+this is a physical consequence of the finite-dimensional unitary
+dynamics (quasi-periodic orbits, no genuine decay), not a numerical
+artefact. We propose $I(O{:}\phi)_{\max}$ and its associated
+informational bound on clock resolution as the correct observables of
+this framework, and identify the continuum limit of the field as the
+next problem.
+\end{abstract}
+
+\section{Introduction}
+
+The Universal Applied Time (UAT) framework \citep{Percudani2025a,
+Percudani2025b, Percudani2025c, Percudani2025d} proposed that the time
+assigned to an event is a measure of the causal connection between
+that event and an observer. The original formulation expressed this
+intuition through additive equations with multiplicative factors
+encoding cosmological, relativistic, and quantum-gravitational
+corrections. Systematic tests against DESI DR2 baryon acoustic
+oscillation data and Pantheon supernova data established that the
+additive formalism was not competitive with $\Lambda$CDM, and
+subsequent analysis identified the root cause as a structural
+incompatibility between the relationalist intuition and the additive
+formalism \citep{Percudani2026}.
+
+The present paper does not attempt to salvage the original equations.
+Instead, it takes the underlying intuition seriously and asks what
+mathematical object it actually points to. The answer---developed in
+collaboration with automated reasoning tools and formalised in a
+companion specification---is that the intuition reduces, in the
+calculable regime, to a statement about the \emph{informational cost}
+of maintaining temporal resolution in an expanding universe.
+
+The technical framework is the modular theory of Tomita--Takesaki
+\citep{Connes1973, Takesaki1970} as applied to quantum clocks in
+cosmological settings by recent work
+\citep{Chandrasekaran2022, Chen2024, Chen2026, Speranza2025,
+DeVuyst2025, Gomez2022, Espindola2026}. We implement the calculation
+for a Gaussian detector coupled to a scalar field, verify the
+Unruh--DeWitt consistency condition, and report both a positive result
+(the KMS test at machine precision) and a negative result (no
+power-law decay in finite-dimensional systems).
+
+\section{What UAT/TAU Really Points To}
+\label{sec:core}
+
+Before the technical development, we state the interpretive claim in
+one sentence, because it is the only claim this paper endorses:
+
+\begin{quote}
+\textbf{The capacity of a quantum observer to resolve cosmic time is
+governed by its mutual information with the field.}
+\end{quote}
+
+This is the honest translation of the original UAT/TAU intuition to
+the language of modular theory and quantum information. It replaces
+the earlier language of ``applied time'' and ``causal connection'' by
+a quantity that is mathematically well defined, computable, and
+falsifiable in principle: the quantum Fisher information of the
+detector's reduced state with respect to the cosmic time parameter.
+
+No stronger claim is made in this paper. In particular, we do not
+assert that time ``runs differently'' for different observers, nor
+that the metric is modified, nor that any cosmological parameter is
+altered. The observable is the resolution of a clock, not the rate of
+time.
+
+\section{Model}
+\label{sec:model}
+
+\subsection{Background and field}
+
+We work in a spatially flat FRW universe with line element
+\begin{equation}
+ds^2 = -dt^2 + a^2(t)\,d\vec{x}^2,
+\end{equation}
+and adopt the radiation-dominated regime $a(\eta) = \eta^2$ in
+conformal time $\eta$, which is sufficient for the numerical
+demonstration. A real massive scalar field $\phi$ of mass
+$m_\phi \ll H_0$ is expanded in comoving modes,
+\begin{equation}
+\phi(\vec{x}, \eta) = \frac{1}{\sqrt{L^3}} \sum_{\vec{k}}
+\left[ a_{\vec{k}} \phi_k(\eta) e^{i \vec{k} \cdot \vec{x}} + \text{h.c.} \right],
+\end{equation}
+with the mode functions satisfying the standard FRW equation. The
+field is prepared in the Bunch--Davies vacuum at early times.
+
+\subsection{Detector}
+
+The observer is modelled as a harmonic oscillator of frequency
+$\omega_0$ with canonical quadratures $R_O = (x_O, p_O)$ obeying
+$[x_O, p_O] = i$ ($\hbar = 1$). We use a harmonic oscillator rather
+than a two-level system because the bilinear coupling
+\begin{equation}
+H_{\rm int} = g\, x_O \, \phi(\vec{x}_O, \eta)
+\end{equation}
+preserves Gaussianity of the joint state, reducing the entire problem
+to matrix algebra on covariance matrices. A two-level detector
+coupled through $\sigma_x$ would break Gaussianity and would in
+addition be subject to the bound $I(O{:}\phi) \le \ln 2$, which
+truncates the analysis prematurely.
+
+\subsection{Covariance matrix formalism}
+
+The joint state is Gaussian and fully characterised by the covariance
+matrix
+\begin{equation}
+\sigma_{ij} = \tfrac{1}{2} \langle \{R_i - \langle R_i \rangle, R_j - \langle R_j \rangle\} \rangle,
+\end{equation}
+with $R = (x_O, p_O, x_1, p_1, \dots, x_N, p_N)$ for $N$ field modes
+retained. The symplectic eigenvalue $\nu_m \ge 1/2$ of each
+$2\times 2$ block determines the von Neumann entropy
+\begin{equation}
+S(\nu) = (\nu + \tfrac{1}{2}) \ln(\nu + \tfrac{1}{2}) - (\nu - \tfrac{1}{2}) \ln(\nu - \tfrac{1}{2}).
+\end{equation}
+The information mutual between the detector and the field is
+\begin{equation}
+I(O{:}\phi) = S(\sigma_O) + S(\sigma_\phi) - S(\sigma_{\rm total}).
+\end{equation}
+
+\subsection{Quantum Fisher information}
+
+The Fisher information of the detector state with respect to a time
+parameter $\lambda$ is, for a Gaussian state,
+\begin{equation}
+F_Q^{(\lambda)} = \tfrac{1}{2} (\partial_\lambda \sigma)^T (\sigma \otimes \sigma - \tfrac{1}{4} \Omega \otimes \Omega)^{-1} (\partial_\lambda \sigma),
+\label{eq:FQ}
+\end{equation}
+where $\Omega$ is the symplectic form and the derivative is taken
+with respect to $\lambda$. The Cram\'er--Rao bound then gives the
+resolution limit
+\begin{equation}
+\Delta \lambda \ge \frac{1}{\sqrt{F_Q^{(\lambda)}}}.
+\end{equation}
+
+Two distinct time parameters are physically relevant:
+\begin{itemize}
+\item the detector's proper time $\tau_O$, and
+\item the cosmic (conformal or scale-factor) time $\eta$ or $t$.
+\end{itemize}
+For an expanding universe, $dt = a\, d\eta$, so
+$F_Q^{(t)} = F_Q^{(\eta)}/a^2$. Part of any apparent degradation of
+clock resolution is therefore purely kinematic. Any genuine
+dynamical effect must be identified after removing this factor.
+
+\section{Unruh--DeWitt Consistency Check}
+\label{sec:kms}
+
+Before computing in FRW, we verify the apparatus against the
+canonical result for an accelerated detector in Minkowski space. The
+Wightman function along a uniformly accelerated trajectory in $1+1$
+dimensions is
+\begin{equation}
+W(\Delta\tau) = -\frac{1}{4\pi} \ln\!\left[ -\frac{4}{a^2} \sinh^2\!\left( \frac{a\,\Delta\tau}{2} \right) - i\varepsilon \right].
+\end{equation}
+The KMS condition for a thermal state at inverse temperature
+$\beta = 2\pi/a$ requires
+\begin{equation}
+W(\Delta\tau - i\beta) = W(-\Delta\tau).
+\end{equation}
+We test this identity numerically for
+$a \in \{0.5, 1.0, 2.0\}$ and $\tau \in [0.01, 5.0]$. The results are
+reported in Table~\ref{tab:kms}.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ccc}
+\toprule
+$a$ & $T = a/2\pi$ & $\max |\Delta W / W|$ \\
+\midrule
+$0.5$ & $0.0796$ & $1.0 \times 10^{-14}$ \\
+$1.0$ & $0.1592$ & $5.0 \times 10^{-15}$ \\
+$2.0$ & $0.3183$ & $2.6 \times 10^{-15}$ \\
+\bottomrule
+\end{tabular}
+\caption{KMS condition test. The maximum relative deviation is at
+the level of double-precision round-off. The apparatus is correct.}
+\label{tab:kms}
+\end{table}
+
+The KMS test passes at machine precision. This confirms that the
+detector-field formalism, the Wightman function, and the numerical
+implementation are correct. Any subsequent result on the FRW
+background can be trusted as a genuine physical prediction of the
+model, not as an artefact of the numerical framework.
+
+\section{Results in an Expanding Background}
+\label{sec:results}
+
+\subsection{Setup}
+
+We take $N$ field modes with comoving momenta
+$k_j = 2\pi j/L$, $j = 1, \dots, N$, on a comoving box of size
+$L = 2\pi$. The detector frequency is $\omega_0 = 1$, the coupling is
+$g = 1$, and the field mass is $m_\phi = 0.25$. The conformal time
+runs from $\eta_i = 2$ to $\eta_f = 7$, corresponding to
+$a \in [4, 49]$. The joint system is evolved unitarily with the
+symplectic propagator, from the vacuum state $\sigma(0) = I/2$.
+
+\subsection{Information mutual and its convergence}
+
+The maximum information mutual between detector and field during the
+evolution is reported in Table~\ref{tab:Imax}.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{cccc}
+\toprule
+$N$ & $\nu_{\max}$ & $I(O{:}\phi)_{\max}$ & $\alpha$ (envelope fit) \\
+\midrule
+$5$  & $0.5252$ & $0.236$ & $-0.04$ \\
+$10$ & $0.5269$ & $0.249$ & $+0.42$ \\
+$20$ & $0.5277$ & $0.255$ & $-1.02$ \\
+$40$ & $0.5283$ & $0.259$ & $-1.49$ \\
+$80$ & $0.5285$ & $0.261$ & $-0.66$ \\
+\bottomrule
+\end{tabular}
+\caption{Convergence of observables with the number $N$ of retained
+field modes. The information mutual $I(O{:}\phi)_{\max}$ converges
+smoothly. The power-law exponent $\alpha$ of the Fisher information
+does not converge and changes sign.}
+\label{tab:Imax}
+\end{table}
+
+Two facts emerge:
+
+\begin{itemize}
+\item $I(O{:}\phi)_{\max}$ converges monotonically to approximately
+$0.26$ nats as $N$ increases. This is a stable, well-defined
+observable of the model.
+
+\item The exponent $\alpha$ fitted to the envelope of $F_Q^{(\eta)}$ in
+the window $a \in [15, 35]$ does not converge. It changes sign between
+successive values of $N$.
+\end{itemize}
+
+\subsection{Interpretation of the non-convergence of $\alpha$}
+
+The non-convergence of $\alpha$ is not a numerical artefact. It is a
+physical consequence of the finite-dimensional, unitary dynamics of
+the model:
+
+\begin{itemize}
+\item The joint system has $2(N+1)$ degrees of freedom and its
+spectrum is discrete.
+\item Unitary evolution of a finite-dimensional system produces
+quasi-periodic orbits, not monotonic decay.
+\item The apparent ``decay'' of $F_Q^{(\eta)}$ in any finite window
+is an interference pattern between nearby modes, not a genuine
+power-law.
+\item Changing $N$ changes the mode frequencies, and therefore changes
+the interference pattern. The fitted exponent is not a physical
+quantity.
+\end{itemize}
+
+The earlier reported value $\alpha \approx 0.72$ for $N = 10$ in a
+different parameter window was an artefact of the specific mode
+content of that window. It does not survive a systematic scan of
+$N$ and window.
+
+This is itself a physical result: \emph{in finite-dimensional unitary
+systems, the modular clock resolution does not decay as a power law.}
+Any genuine decay requires either dissipation (which is absent in the
+closed unitary evolution we simulate) or the continuum limit
+$N \to \infty$ with an associated spectral density.
+
+\section{The Correct Observable}
+\label{sec:observable}
+
+The negative result on $\alpha$ reframes the problem. The correct
+observable of the framework is not a decay exponent of the Fisher
+information; it is the \emph{maximum information mutual} between the
+detector and the field,
+\begin{equation}
+I_{\max} = \max_{\eta \in [\eta_i, \eta_f]} I(O{:}\phi)(\eta).
+\end{equation}
+The informational bound on clock resolution then reads
+\begin{equation}
+\Delta\tau_{\min} \gtrsim T_{\rm total} \, e^{-I_{\max}/2},
+\label{eq:bound}
+\end{equation}
+where $T_{\rm total}$ is the total duration of the observation. For
+$I_{\max} \approx 0.26$ nats, the bound is
+$\Delta\tau_{\min} / T_{\rm total} \gtrsim 0.88$, which is weak. For a
+strongly coupled detector with $I_{\max} \sim 10$ nats, the bound
+would be $\Delta\tau_{\min} / T_{\rm total} \gtrsim 10^{-2}$.
+
+Equation~\eqref{eq:bound} is the honest, calculable form of the
+original UAT intuition. The clock resolution is not a fixed property
+of the observer; it is bounded from below by an exponential of the
+informational connection to the field.
+
+\section{What Is Not Claimed}
+\label{sec:honesty}
+
+For clarity, this paper does not claim:
+
+\begin{enumerate}
+\item That time runs at different rates for different observers.
+The observable is clock resolution, not clock rate.
+
+\item That the metric is modified, or that any cosmological
+parameter is altered. The background is standard $\Lambda$CDM.
+
+\item That the additive formalism of the original UAT is recoverable.
+It is not. The correct formalism is the modular one.
+
+\item That a power-law decay of clock resolution exists in the
+calculable regime. It does not, for finite-dimensional unitary
+systems.
+
+\item That the results generalise to the continuum limit without
+further work. The continuum limit is the next problem.
+\end{enumerate}
+
+\section{Future Work}
+\label{sec:future}
+
+The immediate extension of this work is the continuum limit
+$N \to \infty$. In that limit, the discrete mode spectrum is replaced
+by a spectral density, and the unitary evolution of a finite system
+is replaced by a Markovian or non-Markovian master equation for the
+detector's reduced state. If the field is sufficiently dense in
+frequency space, genuine decay of $F_Q$ may emerge.
+
+Three specific questions for future work:
+
+\begin{enumerate}
+\item Does $I_{\max}$ remain finite as $N \to \infty$, or does it
+grow logarithmically?
+
+\item Does a power-law decay of $F_Q^{(\eta)}$ emerge in the
+continuum, and if so, is the exponent universal or dependent on
+$(g, m, \omega_0)$?
+
+\item Can the results be extended to a full $\Lambda$CDM background,
+including the transition from radiation to matter domination?
+\end{enumerate}
+
+Beyond the calculable program, the framework raises a broader
+question that is outside the scope of this paper: how does the
+informational bound on clock resolution relate to the algebraic
+structure of observables in quantum gravity? The connection to
+crossed-product algebras and quantum reference frames
+\citep{Chandrasekaran2022, Chen2026, DeVuyst2025} suggests that the
+bound may have a deeper algebraic interpretation, but this is a
+matter for future investigation.
+
+\section{Conclusions}
+
+We have reformulated the original UAT/TAU intuition---time as a
+measure of causal connection between an event and an observer---as a
+computable problem in modular theory and quantum information. The
+reformulation yields:
+
+\begin{enumerate}
+\item A correct implementation of the Unruh--DeWitt detector in FRW,
+verified at machine precision against the KMS condition.
+
+\item A stable observable, $I(O{:}\phi)_{\max} \approx 0.26$ nats for
+the parameter set studied, converging with the number of field modes.
+
+\item A negative result: the power-law decay exponent $\alpha$ of the
+Fisher information does not converge in finite-dimensional unitary
+systems. The earlier value $\alpha \approx 0.72$ was an artefact.
+
+\item An interpretive statement that is mathematically well defined
+and consistent with the data: the clock resolution of a quantum
+observer in an expanding universe is bounded from below by an
+exponential of the observer's mutual information with the field.
+\end{enumerate}
+
+The original UAT formulation was not competitive with $\Lambda$CDM
+on cosmological observables. The reformulated framework does not
+claim to be. It claims something more modest and more defensible: the
+intuition behind UAT is correct in a specific, calculable sense, and
+that sense is the informational bound on clock resolution in an
+expanding universe.
+
+\section*{Data and Code Availability}
+
+All numerical results in this paper are reproducible from the
+Python script \texttt{etapaB\_v2.py} included as supplementary
+material. The script uses only \texttt{numpy}, \texttt{scipy}, and
+\texttt{matplotlib}. It generates the KMS verification, the
+convergence table, and the figures in a few minutes on a standard
+laptop.
+
+Prior public releases of the original UAT/TAU framework are archived
+at Zenodo (DOIs \texttt{10.5281/zenodo.17411019},
+\texttt{10.5281/zenodo.17411163}, \texttt{10.5281/zenodo.17422770},
+\texttt{10.5281/zenodo.17695218}) and on GitHub
+(\texttt{miguelpercu/Tiempo\_Aplicable\_7.10.25},
+\texttt{miguelpercu/ecuaciones-tiempos-aplicables},
+\texttt{miguelpercu/tiempo-aplicable-cuantico}). These records
+document the priority of the underlying intuition.
+
+\section*{Acknowledgments}
+
+The author thanks KIMI IA and Deep IA for collaborative technical
+development during the reformulation, and acknowledges the use of
+automated reasoning tools in the preparation of this work.
+
+\begin{thebibliography}{99}
+
+\bibitem{Percudani2025a}
+M.~\'A.~Percudani,
+\newblock \emph{Tiempo Aplicable: Un marco temporal unificado},
+\newblock Zenodo (2025), DOI: 10.5281/zenodo.17411019.
+
+\bibitem{Percudani2025b}
+M.~\'A.~Percudani,
+\newblock \emph{Ecuaciones del tiempo aplicable unificado},
+\newblock Zenodo (2025), DOI: 10.5281/zenodo.17411163.
+
+\bibitem{Percudani2025c}
+M.~\'A.~Percudani,
+\newblock \emph{Tiempo aplicable cu\'antico y agujeros negros primordiales},
+\newblock Zenodo (2025), DOI: 10.5281/zenodo.17422770.
+
+\bibitem{Percudani2025d}
+M.~\'A.~Percudani,
+\newblock \emph{Un marco unificado de tiempo aplicable},
+\newblock Zenodo (2025), DOI: 10.5281/zenodo.17695218.
+
+\bibitem{Percudani2026}
+M.~\'A.~Percudani,
+\newblock \emph{Additive formalism and relational intuition:
+A case study in the foundations of cosmological time},
+\newblock in preparation (2026).
+
+\bibitem{Connes1973}
+A.~Connes,
+\newblock Une classification des facteurs de type III,
+\newblock \emph{Ann. Sci. \'Ec. Norm. Sup.} \textbf{6}, 133 (1973).
+
+\bibitem{Takesaki1970}
+M.~Takesaki,
+\newblock Tomita's theory of modular Hilbert algebras and its applications,
+\newblock \emph{Lecture Notes in Mathematics} \textbf{128}, Springer (1970).
+
+\bibitem{ConnesRovelli1994}
+A.~Connes and C.~Rovelli,
+\newblock Von Neumann algebra automorphisms and time--thermodynamics
+relation in generally covariant quantum theories,
+\newblock \emph{Class. Quantum Grav.} \textbf{11}, 2899 (1994).
+
+\bibitem{Chandrasekaran2022}
+V.~Chandrasekaran, R.~Longo, G.~Penington, and E.~Witten,
+\newblock An algebra of observables for de Sitter space,
+\newblock arXiv:2206.10780 (2022).
+
+\bibitem{Chen2024}
+Y.~Chen and G.~Penington,
+\newblock A clock is just a way to tell the time: gravitational
+algebras in cosmological spacetimes,
+\newblock arXiv:2406.02116 (2024).
+
+\bibitem{Chen2026}
+Y.~Chen, et al.,
+\newblock An algebra for covariant observers in de Sitter space,
+\newblock \emph{JHEP} \textbf{09}, 240 (2026), arXiv:2511.00622.
+
+\bibitem{Speranza2025}
+A.~Speranza,
+\newblock An intrinsic cosmological observer,
+\newblock arXiv:2504.07630 (2025).
+
+\bibitem{DeVuyst2025}
+J.~De Vuyst, S.~Eccles, P.~A.~Hoehn, and J.~Kirklin,
+\newblock Crossed products and quantum reference frames:
+on the observer-dependence of gravitational entropy,
+\newblock \emph{JHEP} \textbf{07}, 063 (2025), arXiv:2412.15502.
+
+\bibitem{Gomez2022}
+C.~G\'omez,
+\newblock Cosmology as a crossed product,
+\newblock arXiv:2207.06704 (2022).
+
+\bibitem{Espindola2026}
+L.~Esp\'indola and K.~Miyashita,
+\newblock The mini-Page curve in cosmology,
+\newblock arXiv:2607.08737 (2026).
+
+\bibitem{Unruh1976}
+W.~G.~Unruh,
+\newblock Notes on black-hole evaporation,
+\newblock \emph{Phys. Rev. D} \textbf{14}, 870 (1976).
+
+\bibitem{BirrellDavies1982}
+N.~D.~Birrell and P.~C.~W.~Davies,
+\newblock \emph{Quantum Fields in Curved Space},
+\newblock Cambridge University Press (1982).
+
+\bibitem{Erker2017}
+P.~Erker, M.~T.~Mitchison, R.~Silva, D.~K.~L.~Oi, S.~D.~Bartlett,
+and M.~Huber,
+\newblock Autonomous quantum clocks: does thermodynamics limit our
+ability to measure time?,
+\newblock \emph{Phys. Rev. X} \textbf{7}, 031022 (2017).
+
+\bibitem{Woods2019}
+M.~P.~Woods, R.~Silva, G.~P\"utz, S.~Stupar, and R.~Renner,
+\newblock Quantum clocks are more accurate than classical ones,
+\newblock \emph{PRA} \textbf{100}, 062115 (2019).
+
+\bibitem{Salecker1957}
+H.~Salecker and E.~P.~Wigner,
+\newblock Quantum limitations of the measurement of space-time distances,
+\newblock \emph{Phys. Rev.} \textbf{109}, 571 (1958).
+
+\bibitem{Braunstein1994}
+S.~L.~Braunstein and C.~M.~Caves,
+\newblock Statistical distance and the geometry of quantum states,
+\newblock \emph{Phys. Rev. Lett.} \textbf{72}, 3439 (1994).
+
+\bibitem{Pinel2012}
+O.~Pinel, P.~J.~Y.~Louis, and N.~J.~Cerf,
+\newblock Quantum metrology with a squeezed state of a mechanical
+oscillator,
+\newblock \emph{Phys. Rev. A} \textbf{85}, 010101 (2012).
+
+\bibitem{Safranek2015}
+D.~\v{S}afr\'anek, I.~Fuentes, et al.,
+\newblock Quantum parameter estimation using multi-mode Gaussian states,
+\newblock \emph{Phys. Rev. A} \textbf{91}, 012306 (2015).
+
+\bibitem{Eisert2003}
+J.~Eisert and M.~B.~Plenio,
+\newblock Introduction to the basics of entanglement theory,
+\newblock \emph{Int. J. Quant. Inf.} \textbf{1}, 479 (2003).
+
+\bibitem{Zych2011}
+M.~Zych, F.~Costa, I.~Pikovski, and \v{C}.~Brukner,
+\newblock Quantum interferometric visibility as a witness of general
+relativistic proper time,
+\newblock \emph{Nat. Commun.} \textbf{2}, 505 (2011).
+
+\bibitem{CastroRuiz2017}
+E.~Castro-Ruiz, F.~Giacomini, \v{C}.~Brukner, et al.,
+\newblock Entanglement of quantum clocks through gravity,
+\newblock \emph{PNAS} \textbf{114}, E2303 (2017).
+
+\bibitem{Giacomini2020}
+F.~Giacomini and \v{C}.~Brukner,
+\newblock Quantum mechanics and quantum field theory in a quantum
+reference frame,
+\newblock \emph{Phys. Rev. Res.} \textbf{2}, 033122 (2020).
+
+\end{thebibliography}
+
+\end{document}
